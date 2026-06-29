@@ -23,9 +23,12 @@ const Navbar = () => {
 
                 <div className="hidden lg:flex items-center gap-8 text-sm font-medium">
 
-                    <a className="hover:text-orange-400 transition-all">
+                    <Link
+                        to="/"
+                        className="hover:text-orange-400 transition-all"
+                    >
                         Home
-                    </a>
+                    </Link>
 
                     <Link to="/menu"
                         className="hover:text-orange-400 cursor-pointer transition-all"
@@ -37,9 +40,12 @@ const Navbar = () => {
                         Offers
                     </a> */}
 
-                    <a className="hover:text-orange-400 transition-all">
-                        Contact
-                    </a>
+                    <Link
+                        to="/Addresses"
+                        className="hover:text-orange-400 transition-all"
+                    >
+                        Address
+                    </Link>
 
                 </div>
 
@@ -47,7 +53,7 @@ const Navbar = () => {
 
                     <button
                         onClick={() => navigate("/login")}
-                        className="hidden md:block px-5 py-2 rounded-full border border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white transition-all">
+                        className="px-5 py-2 rounded-full border border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white transition-all">
                         Login
                     </button>
 

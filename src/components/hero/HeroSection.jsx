@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 const HeroSection = () => {
+  const navigate = useNavigate();
   return (
     <section className="relative min-h-screen pt-24 overflow-hidden">
 
@@ -43,11 +45,15 @@ const HeroSection = () => {
 
           <div className="flex flex-wrap gap-4 mt-8">
 
-            <button className="px-8 py-4 bg-orange-500 rounded-2xl font-semibold hover:scale-105 transition-all duration-300 shadow-lg shadow-orange-500/30">
+            <button
+            onClick={() => navigate("/menu")}
+            className="px-8 py-4 bg-orange-500 rounded-2xl font-semibold hover:scale-105 transition-all duration-300 shadow-lg shadow-orange-500/30">
               Order Now →
             </button>
 
-            <button className="px-8 py-4 border border-orange-500 rounded-2xl hover:bg-orange-500/10 transition-all duration-300">
+            <button
+            onClick={() => navigate("/menu")}
+            className="px-8 py-4 border border-orange-500 rounded-2xl hover:bg-orange-500/10 transition-all duration-300">
               Explore Menu
             </button>
 

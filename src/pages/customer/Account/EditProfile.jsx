@@ -63,7 +63,7 @@ const EditProfile = () => {
       });
 
       alert("Profile updated successfully");
-      navigate("/account");
+      navigate("/menu");
 
     }catch(err){
       alert(err.response?.data?.message || "Something went wrong");

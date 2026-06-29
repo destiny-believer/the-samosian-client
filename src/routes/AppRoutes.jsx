@@ -18,6 +18,8 @@ import OrderSuccess from "../pages/OrderSuccess/OrderSuccess";
 import EditProfile from "../pages/customer/Account/EditProfile";
 import Account from "../pages/customer/Account/Account";
 import Favorites from "../pages/customer/Favorites/Favorites";
+import BottomNavbar from "../components/navigation/BottomNavbar";
+import Orders from "../pages/Orders/Orders";
 
 const AppRoutes = () => {
   return (
@@ -48,7 +50,9 @@ const AppRoutes = () => {
         <Route path="/edit-profile" element={<EditProfile/>}/>
         <Route path="/account" element={<Account/>}/>
         <Route path="/favorites" element={<Favorites/>}/>
+        <Route path="/Orders" element={<Orders/>}/>
       </Routes>
+      <BottomNavbar />
     </BrowserRouter>
   );
 };

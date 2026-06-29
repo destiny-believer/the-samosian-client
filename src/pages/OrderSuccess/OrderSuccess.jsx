@@ -1,139 +1,130 @@
-import { useNavigate,useParams }
-from "react-router-dom";
+import { FaCheckCircle } from "react-icons/fa";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const OrderSuccess = () => {
 
-  const navigate =
-    useNavigate();
+    const navigate = useNavigate();
 
-  const { id } =
-    useParams();
+    const { state } = useLocation();
 
-  return (
+    const order = state?.order;
 
-    <div className="
-      min-h-screen
-      flex
-      items-center
-      justify-center
-      px-5
-    ">
+    return (
 
-      <div className="
-        max-w-lg
-        w-full
-        text-center
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center px-5">
 
-        bg-slate-900/70
-        backdrop-blur-xl
+            <div className="max-w-lg w-full bg-slate-900 border border-green-500/20 rounded-3xl p-10 text-center">
 
-        border
-        border-green-500/20
+                <FaCheckCircle
+                    size={90}
+                    className="mx-auto text-green-500"
+                />
 
-        rounded-3xl
+                <h1 className="text-4xl font-bold mt-8">
 
-        p-10
-      ">
+                    Order Placed Successfully!
 
-        <div className="
-          text-7xl
-          mb-5
-        ">
+                </h1>
 
-          🎉
+                <p className="text-gray-400 mt-5">
+
+                    Thank you for ordering from
+
+                    <span className="text-orange-500">
+
+                        {" "}The Samosian
+
+                    </span>
+
+                </p>
+
+                {
+
+                    order && (
+
+                        <>
+
+                            <div className="mt-8">
+
+                                <p className="text-gray-400">
+
+                                    Order ID
+
+                                </p>
+
+                                <h2 className="text-2xl font-bold mt-2">
+
+                                    #
+
+                                    {order._id.slice(-6)}
+
+                                </h2>
+
+                            </div>
+
+                            <div className="mt-6">
+
+                                <p className="text-gray-400">
+
+                                    Estimated Delivery
+
+                                </p>
+
+                                <h2 className="text-xl font-semibold mt-2">
+
+                                    25 - 35 Minutes
+
+                                </h2>
+
+                            </div>
+
+                        </>
+
+                    )
+
+                }
+
+                <div className="flex flex-col gap-4 mt-10">
+
+                    <button
+
+                        onClick={()=>
+
+                            navigate(
+
+                                `/track-order/${order._id}`
+
+                            )
+
+                        }
+
+                        className="w-full py-4 rounded-xl bg-orange-500 font-bold"
+
+                    >
+
+                        Track Order
+
+                    </button>
+
+                    <button
+
+                        onClick={()=>navigate("/menu")}
+
+                        className="w-full py-4 rounded-xl border border-orange-500"
+
+                    >
+
+                        Continue Shopping
+
+                    </button>
+
+                </div>
+
+            </div>
 
         </div>
 
-        <h1 className="
-          text-4xl
-          font-bold
-          mb-4
-        ">
-
-          Order Placed
-
-        </h1>
-
-        <p className="
-          text-slate-400
-          mb-8
-        ">
-
-          Your order has been
-          successfully placed.
-
-        </p>
-
-        <div className="
-          bg-white/5
-          rounded-2xl
-          p-5
-          mb-8
-        ">
-
-          <p>
-
-            Order ID
-
-          </p>
-
-          <h3 className="
-            text-xl
-            font-bold
-          ">
-
-            #
-            {
-              id.slice(-6)
-            }
-
-          </h3>
-
-        </div>
-
-        <button
-          onClick={() =>
-            navigate(
-              `/orders/${id}`
-            )
-          }
-          className="
-          w-full
-          py-4
-          rounded-2xl
-          bg-orange-500
-          mb-3
-        "
-        >
-
-          Track Order
-
-        </button>
-
-        <button
-          onClick={() =>
-            navigate(
-              "/menu"
-            )
-          }
-          className="
-          w-full
-          py-4
-          rounded-2xl
-          border
-          border-white/10
-        "
-        >
-
-          Continue Shopping
-
-        </button>
-
-      </div>
-
-    </div>
-
-  );
+    );
 
 };
 

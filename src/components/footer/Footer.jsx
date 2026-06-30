@@ -31,10 +31,9 @@ const Footer = () => {
 
             <div className="space-y-2 text-gray-400">
 
-              <Link to="/">Home</Link>
+              <Link to="/">Home</Link> /n
               <Link to="/menu">Menu</Link>
-              <p>Offers</p>
-              <p>Contact</p>
+              <Link to="/addresses">Address</Link>
 
             </div>
 

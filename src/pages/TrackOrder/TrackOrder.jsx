@@ -76,36 +76,131 @@ const TrackOrder = () => {
         useState([]);
 
     const [reviews, setReviews] = useState({});
-
+    const [map, setMap] = useState(null);
     const [myReviews, setMyReviews] = useState({});
+    const [animatedLocation, setAnimatedLocation] = useState(null);
 
     const [reviewLoading, setReviewLoading] = useState(false);
+    const [travelInfo, setTravelInfo] = useState({ distance: "", duration: "" });
+    const [mapApi, setMapApi] = useState(null);
+    const [isMapLoaded, setIsMapLoaded] = useState(false);
+
+    const fetchMyReviews =
+        async (orderData) => {
+
+            try {
+
+                const reviewMap = {};
+
+                for (const item of orderData.items) {
+
+                    const response =
+                        await api.get(
+                            `/products/review/${item.product}`
+                        );
+
+                    if (
+                        response.data.reviewed
+                    ) {
+
+                        reviewMap[item.product] =
+                            response.data.review;
+
+                    }
+
+                }
+
+                setMyReviews(reviewMap);
+
+            } catch (error) {
+
+                console.log(error);
+
+            }
+
+        };
+
     // Fetch Order
 
-    const fetchOrder =
+    const fetchOrder = async () => {
+
+        try {
+
+            const response =
+                await api.get(`/orders/${id}`);
+
+            const orderData =
+                response.data.order;
+
+            console.log("ORDER DATA:", orderData);
+
+            setOrder(orderData);
+
+            // Set initial agent location
+            if (
+                orderData.agent &&
+                orderData.agent.currentLatitude !== null &&
+                orderData.agent.currentLongitude !== null
+            ) {
+
+                setAgentLocation({
+
+                    latitude:
+                        orderData.agent.currentLatitude,
+
+                    longitude:
+                        orderData.agent.currentLongitude,
+
+                    agent:
+                        orderData.agent
+
+                });
+
+            }
+
+            await fetchMyReviews(orderData);
+
+        } catch (error) {
+
+            console.log(error);
+
+        }
+
+    };
+
+    const fetchLiveLocation =
         async () => {
 
             try {
 
                 const response =
                     await api.get(
-                        `/orders/${id}`
+                        `/orders/live-location/${id}`
                     );
-                console.log(
-                    "ORDER DATA:",
-                    response.data.order
-                );
-                setOrder(
-                    response.data.order
-                );
 
-                await fetchMyReviews(
-                    response.data.order
-                );
+                if (
+                    response.data?.success &&
+                    response.data.latitude !== undefined &&
+                    response.data.longitude !== undefined &&
+                    response.data.latitude !== null &&
+                    response.data.longitude !== null
+                ) {
+                    setAgentLocation({
+                        latitude:
+                            response.data.latitude,
+                        longitude:
+                            response.data.longitude,
+                        agent:
+                            response.data.agent
+                    });
+                }
 
             } catch (error) {
 
-                console.log(error);
+                console.log(
+                    "LIVE LOCATION FETCH ERROR:",
+                    error
+                );
 
             }
 
@@ -202,58 +297,134 @@ const TrackOrder = () => {
 
     useEffect(() => {
 
+        if (map && agentLocation) {
+
+            map.panTo({
+
+                lat: agentLocation.latitude,
+
+                lng: agentLocation.longitude
+
+            });
+
+        }
+
+    }, [agentLocation, map]);
+
+    useEffect(() => {
+
+        if (!agentLocation) return;
+
+        setAnimatedLocation((previous) => {
+
+            if (!previous) {
+
+                return agentLocation;
+
+            }
+
+            const startLat = previous.latitude;
+            const startLng = previous.longitude;
+
+            const endLat = agentLocation.latitude;
+            const endLng = agentLocation.longitude;
+
+            let progress = 0;
+
+            const interval = setInterval(() => {
+
+                progress += 0.05;
+
+                if (progress >= 1) {
+
+                    clearInterval(interval);
+
+                    setAnimatedLocation(agentLocation);
+
+                    return;
+
+                }
+
+                setAnimatedLocation({
+
+                    latitude:
+                        startLat +
+                        (endLat - startLat) *
+                        progress,
+
+                    longitude:
+                        startLng +
+                        (endLng - startLng) *
+                        progress
+
+                });
+
+            }, 30);
+
+            return previous;
+
+        });
+
+    }, [agentLocation]);
+
+    useEffect(() => {
+
         if (
+            !isMapLoaded ||
+            !window.google ||
+            !window.google.maps ||
             !agentLocation ||
-            !order ||
-            !order.address ||
-            !window.google
+            !order
         ) {
             return;
         }
 
         const service =
-            new window.google.maps
-                .DirectionsService();
+            new google.maps.DirectionsService();
 
         service.route(
             {
                 origin: {
-                    lat:
-                        agentLocation.latitude,
-
-                    lng:
-                        agentLocation.longitude
+                    lat: agentLocation.latitude,
+                    lng: agentLocation.longitude
                 },
 
                 destination: {
-                    lat:
-                        order.address.latitude,
-
-                    lng:
-                        order.address.longitude
+                    lat: order.address.latitude,
+                    lng: order.address.longitude
                 },
 
                 travelMode:
-                    window.google.maps
-                        .TravelMode.DRIVING
+                    window.google.maps.TravelMode.DRIVING
             },
 
             (result, status) => {
 
-                if (
-                    status === "OK"
-                ) {
+                if (status === "OK") {
 
-                    setDirections(
-                        result
-                    );
+                    setDirections(result);
+
+                    const leg =
+                        result.routes[0].legs[0];
+
+                    setTravelInfo({
+
+                        distance:
+                            leg.distance.text,
+
+                        duration:
+                            leg.duration.text
+
+                    });
 
                 }
 
             }
+
         );
 
     }, [
+        isMapLoaded,
         agentLocation,
         order
     ]);
@@ -282,40 +453,40 @@ const TrackOrder = () => {
         order.orderStatus
         ];
 
-    const fetchMyReviews =
-        async (orderData) => {
+    // const fetchMyReviews =
+    //     async (orderData) => {
 
-            try {
+    //         try {
 
-                const reviewMap = {};
+    //             const reviewMap = {};
 
-                for (const item of orderData.items) {
+    //             for (const item of orderData.items) {
 
-                    const response =
-                        await api.get(
-                            `/products/review/${item.product}`
-                        );
+    //                 const response =
+    //                     await api.get(
+    //                         `/products/review/${item.product}`
+    //                     );
 
-                    if (
-                        response.data.reviewed
-                    ) {
+    //                 if (
+    //                     response.data.reviewed
+    //                 ) {
 
-                        reviewMap[item.product] =
-                            response.data.review;
+    //                     reviewMap[item.product] =
+    //                         response.data.review;
 
-                    }
+    //                 }
 
-                }
+    //             }
 
-                setMyReviews(reviewMap);
+    //             setMyReviews(reviewMap);
 
-            } catch (error) {
+    //         } catch (error) {
 
-                console.log(error);
+    //             console.log(error);
 
-            }
+    //         }
 
-        };
+    //     };
 
     const submitReview =
         async (productId) => {
@@ -365,6 +536,8 @@ const TrackOrder = () => {
             }
 
         };
+
+
 
 
     return (
@@ -486,6 +659,34 @@ const TrackOrder = () => {
 
             </div>
 
+            {
+                travelInfo && (
+
+                    <div className="bg-cyan-500/10 border border-cyan-500 rounded-2xl p-4 mb-4">
+
+                        <h3 className="font-bold text-xl">
+
+                            🚴 Delivery Partner
+
+                        </h3>
+
+                        <p>
+
+                            📍 {travelInfo.distance} away
+
+                        </p>
+
+                        <p>
+
+                            ⏱️ ETA: {travelInfo.duration}
+
+                        </p>
+
+                    </div>
+
+                )
+            }
+
             {/* MAP + LIVE TRACKING */}
 
             <div className="grid lg:grid-cols-4 gap-6 mb-8">
@@ -496,64 +697,84 @@ const TrackOrder = () => {
 
                         <LoadScript
                             googleMapsApiKey={
-                                import.meta.env
-                                    .VITE_GOOGLE_MAPS_API_KEY
+                                import.meta.env.VITE_GOOGLE_MAPS_API_KEY
                             }
+
+                            onLoad={() => {
+
+                                setIsMapLoaded(true);
+
+                            }}
                         >
 
                             <GoogleMap
-                                mapContainerStyle={
-                                    mapContainerStyle
-                                }
+                                mapContainerStyle={mapContainerStyle}
                                 center={
                                     agentLocation
                                         ? {
-                                            lat:
-                                                agentLocation.latitude,
-                                            lng:
-                                                agentLocation.longitude
+                                            lat: agentLocation.latitude,
+                                            lng: agentLocation.longitude
                                         }
                                         : shopLocation
                                 }
-                                zoom={13}
-                                options={{
-                                    streetViewControl: false,
-                                    mapTypeControl: false,
-                                    fullscreenControl: false
+                                zoom={15}
+                                onLoad={(mapInstance) => {
+
+                                    setMap(mapInstance);
+
+                                    setMapApi(window.google.maps);
+
                                 }}
                             >
 
+                                {/* 🏪 Shop Marker */}
                                 <Marker
                                     position={shopLocation}
-                                    label="🏪"
+                                    icon={
+                                        mapApi
+                                            ? {
+                                                url: "/map-icons/shop.png",
+                                                scaledSize: new mapApi.Size(42, 42)
+                                            }
+                                            : undefined
+                                    }
                                 />
 
+                                {/* 🏠 Customer Marker */}
                                 <Marker
                                     position={{
-                                        lat:
-                                            order.address.latitude,
-                                        lng:
-                                            order.address.longitude
+                                        lat: order.address.latitude,
+                                        lng: order.address.longitude
                                     }}
-                                    label="🏠"
+                                    icon={
+                                        mapApi
+                                            ? {
+                                                url: "/map-icons/home.png",
+                                                scaledSize: new mapApi.Size(42, 42)
+                                            }
+                                            : undefined
+                                    }
                                 />
 
-                                {
-                                    agentLocation && (
+                                {/* 🛵 Agent Marker */}
+                                {agentLocation && animatedLocation && (
 
-                                        <Marker
-                                            position={{
-                                                lat:
-                                                    agentLocation.latitude,
-                                                lng:
-                                                    agentLocation.longitude
-                                            }}
-                                            label="🛵"
-                                        />
+                                    <Marker
+                                        position={{
+                                            lat: animatedLocation.latitude,
+                                            lng: animatedLocation.longitude
+                                        }}
+                                        icon={
+                                            mapApi
+                                                ? {
+                                                    url: "/map-icons/bike.png",
+                                                    scaledSize: new mapApi.Size(50, 50)
+                                                }
+                                                : undefined
+                                        }
+                                    />
 
-                                    )
-                                }
-
+                                )}
                                 {
                                     directions && (
 
@@ -634,36 +855,88 @@ const TrackOrder = () => {
                 <div className="bg-slate-900/70 border border-cyan-500/20 rounded-3xl p-6">
 
                     <h2 className="text-2xl font-bold mb-6">
-                        Delivery Partner
+                        🚴 Delivery Partner
                     </h2>
 
                     {
+
                         order.agent ? (
 
                             <>
+
                                 <h3 className="text-3xl font-bold">
+
                                     {order.agent.name}
+
                                 </h3>
 
                                 <p className="text-slate-400 mt-2">
+
+                                    Vehicle :
                                     {order.agent.vehicleNumber}
+
                                 </p>
 
+                                <div className="mt-6 space-y-3">
+
+                                    <div className="flex justify-between">
+
+                                        <span>
+
+                                            📍 Distance
+
+                                        </span>
+
+                                        <span className="font-semibold">
+
+                                            {travelInfo.distance}
+
+                                        </span>
+
+                                    </div>
+
+                                    <div className="flex justify-between">
+
+                                        <span>
+
+                                            ⏱ ETA
+
+                                        </span>
+
+                                        <span className="font-semibold text-green-400">
+
+                                            {travelInfo.duration}
+
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
                                 <a
+
                                     href={`tel:${order.agent.phone}`}
-                                    className="inline-block mt-6 bg-green-500 hover:bg-green-400 px-5 py-3 rounded-2xl font-semibold"
+
+                                    className="mt-6 w-full flex justify-center bg-green-500 hover:bg-green-400 py-3 rounded-2xl font-semibold"
+
                                 >
-                                    📞 Call Partner
+
+                                    📞 Call Delivery Partner
+
                                 </a>
+
                             </>
 
                         ) : (
 
-                            <p className="text-slate-400">
-                                Delivery partner not assigned yet
+                            <p>
+
+                                Waiting for Delivery Partner...
+
                             </p>
 
                         )
+
                     }
 
                 </div>
@@ -1107,6 +1380,7 @@ const TrackOrder = () => {
                 )
             }
 
+
         </div>
 
     );
@@ -1120,10 +1394,11 @@ export default TrackOrder;
 
 
 
+
 // <div className="bg-red-500 p-4 mb-5">
 
 //     <pre>
-//         {
+//             {
 //             JSON.stringify(
 //                 agentLocation,
 //                 null,

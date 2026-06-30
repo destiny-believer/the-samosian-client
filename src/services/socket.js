@@ -1,7 +1,13 @@
 import { io } from "socket.io-client";
 
+const apiUrl = import.meta.env.VITE_API_URL || "";
+const socketBaseURL =
+  import.meta.env.VITE_SOCKET_URL ||
+  apiUrl.replace(/\/api$/, "") ||
+  window.location.origin;
+
 const socket = io(
-  import.meta.env.VITE_API_URL,
+  socketBaseURL,
   {
     reconnection: true,
     reconnectionDelay: 1000,

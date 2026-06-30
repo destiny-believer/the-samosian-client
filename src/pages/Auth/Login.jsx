@@ -1,7 +1,10 @@
 import { useState } from "react";
 import api from "../../services/api";
 import { useNavigate } from "react-router-dom";
-import { useCustomer } from "../../context/CustomerContext";
+import { useCustomer } from "../../context/CustomerContext"
+import FirebaseRecaptcha from "../../components/auth/FirebaseRecaptcha";
+import { signInWithPhoneNumber } from "firebase/auth";
+import { auth } from "../../firebase/firebase"
 
 const Login = () => {
 
@@ -17,22 +20,49 @@ const Login = () => {
   const [otpSent, setOtpSent] =
     useState(false);
 
+  const [loading, setLoading] = useState(false)
+
   const sendOtp = async () => {
 
     try {
 
-      await api.post(
-        "/customers/send-otp",
-        { phone }
-      );
+      setLoading(true);
+
+      const appVerifier = window.recaptchaVerifier;
+
+      const confirmationResult =
+        await signInWithPhoneNumber(
+
+          auth,
+
+          `+91${phone}`,
+
+          appVerifier
+
+        );
+
+      window.confirmationResult =
+        confirmationResult;
 
       setOtpSent(true);
 
-      alert("OTP Sent");
+      alert("OTP Sent Successfully");
 
-    } catch (error) {
+    }
 
-      console.log(error);
+    catch (error) {
+
+      console.log("Firebase Error:", error);
+      console.log("Error Code:", error.code);
+      console.log("Error Message:", error.message);
+
+      alert(error.message);
+
+    }
+
+    finally {
+
+      setLoading(false);
 
     }
 
@@ -42,42 +72,43 @@ const Login = () => {
 
     try {
 
+      setLoading(true);
+
+      // Verify OTP with Firebase
+      const result =
+        await window.confirmationResult.confirm(otp);
+
+      // Get Firebase ID Token
+      const firebaseToken =
+        await result.user.getIdToken();
+
+      // Send Firebase token to backend
       const response =
         await api.post(
-          "/customers/verify-otp",
+          "/customers/firebase-login",
           {
-            phone,
-            otp
+            firebaseToken
           }
         );
 
+      // Save JWT
       localStorage.setItem(
         "customerToken",
         response.data.token
       );
 
-      const profileResponse =
-        await api.get(
-          "/customers/profile"
-        );
-
-      const customer =
-        profileResponse.data.customer;
-
+      // Save customer
       localStorage.setItem(
         "customer",
-        JSON.stringify(customer)
+        JSON.stringify(response.data.customer)
       );
 
-      if (
-        !customer.name ||
-        customer.name.trim() === ""
-      ) {
+      const customer =
+        response.data.customer;
 
-        navigate(
-          "/edit-profile"
-        );
+      if (!customer.name || customer.name.trim() === "") {
 
+        navigate("/edit-profile");
         return;
 
       }
@@ -86,9 +117,22 @@ const Login = () => {
 
       navigate("/account");
 
-    } catch (error) {
+    }
+
+    catch (error) {
 
       console.log(error);
+
+      alert(
+        error.response?.data?.message ||
+        error.message
+      );
+
+    }
+
+    finally {
+
+      setLoading(false);
 
     }
 
@@ -150,7 +194,7 @@ const Login = () => {
         )}
 
       </div>
-
+      <FirebaseRecaptcha />
     </div>
 
   );

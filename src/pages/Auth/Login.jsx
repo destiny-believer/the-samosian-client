@@ -1,6 +1,6 @@
 import { useState } from "react";
 import api from "../../services/api";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useCustomer } from "../../context/CustomerContext"
 import FirebaseRecaptcha from "../../components/auth/FirebaseRecaptcha";
 import { signInWithPhoneNumber } from "firebase/auth";
@@ -10,6 +10,7 @@ const Login = () => {
 
   const navigate = useNavigate();
   const { fetchCustomer } = useCustomer();
+  const location = useLocation();
 
   const [phone, setPhone] =
     useState("");
@@ -106,16 +107,27 @@ const Login = () => {
       const customer =
         response.data.customer;
 
-      if (!customer.name || customer.name.trim() === "") {
+      const from =
+        location.state?.from;
 
-        navigate("/edit-profile");
+      if (
+        !customer.name ||
+        customer.name.trim() === ""
+      ) {
+
+        navigate("/edit-profile", {
+          state: {
+            from
+          }
+        });
+
         return;
 
       }
 
-      await fetchCustomer();
-
-      navigate("/account");
+      navigate(
+        from || "/menu"
+      );
 
     }
 

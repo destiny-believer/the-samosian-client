@@ -18,6 +18,27 @@ const Cart = () => {
         }
     };
 
+    const customerToken =
+        localStorage.getItem("customerToken");
+
+    const handleCheckout = () => {
+
+        if (!customerToken) {
+
+            navigate("/login", {
+                state: {
+                    from: "/checkout"
+                }
+            });
+
+            return;
+
+        }
+
+        navigate("/checkout");
+
+    };
+
     const updateQuantity = async (
         productId,
         variantName,
@@ -549,12 +570,8 @@ const Cart = () => {
                         </button>
 
                         <button
-                            onClick={() =>
-                                navigate("/checkout")
-                            }
-                            disabled={
-                                cart.totalAmount < 350
-                            }
+                            onClick={handleCheckout}
+                            disabled={cart.totalAmount < 350}
                             className="
         w-full
         mt-4

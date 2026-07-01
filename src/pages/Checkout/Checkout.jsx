@@ -8,6 +8,9 @@ const Checkout = () => {
   const navigate = useNavigate();
 
   const [addresses, setAddresses] = useState([]);
+  const [deliveryInstructions,
+    setDeliveryInstructions] =
+    useState("");
 
   const [selectedAddress, setSelectedAddress] = useState(0);
 
@@ -108,7 +111,6 @@ const Checkout = () => {
           formData
         );
 
-        await fetchAddresses();
 
         setShowAddressModal(
           false
@@ -118,6 +120,10 @@ const Checkout = () => {
           await api.get(
             "/customers/address"
           );
+
+        setAddresses(
+          latestAddresses.data.addresses
+        );
 
         setAddresses(
           latestAddresses
@@ -177,7 +183,9 @@ const Checkout = () => {
           "/orders/place-order",
           {
             addressIndex:
-              selectedAddress
+              selectedAddress,
+
+            deliveryInstructions
           }
         );
         setOrderLoading(false);
@@ -497,6 +505,13 @@ const Checkout = () => {
               </h2>
 
               <textarea
+                value={deliveryInstructions}
+
+                onChange={(e) =>
+                  setDeliveryInstructions(
+                    e.target.value
+                  )
+                }
                 rows={4}
                 placeholder="Example: Please don't ring the bell. Call me when you arrive."
                 className="w-full rounded-2xl bg-white/5 border border-white/10 p-4 outline-none focus:border-orange-500 resize-none"

@@ -1,24 +1,44 @@
-import Navbar from "../../components/navbar/Navbar";
-import HeroSection from "../../components/hero/HeroSection";
-import Categories from "../../components/category/Categories";
-import MainLayout from "../../layouts/MainLayout";
-import PopularProducts from "../../components/product/PopularProducts";
-import WhyChooseUs from "../../components/whyChooseUs/WhyChooseUs";
-import Reviews from "../../components/reviews/Reviews";
-import Footer from "../../components/footer/Footer";
+import Hero from "../../components/home/Hero/Hero";
+import SearchBar from "../../components/home/Search/SearchBar";
+import Categories from "../../components/home/Categories/Categories";
+import TrendingProducts from "../../components/home/Trending/TrendingProducts";
+import BestSeller from "../../components/home/BestSeller/BestSeller";
+import WhyChooseUs from "../../components/home/WhyChooseUs/WhyChooseUs";
+import CustomerReviews from "../../components/home/Reviews/CustomerReviews";
+import DeliveryArea from "../../components/home/Delivery/DeliveryArea";
+import FoodGallery from "../../components/home/Gallery/FoodGallery";
+import Footer from "../../components/home/Footer/Footer";
 
 const Home = () => {
-  return (
-    <MainLayout>
-      <Navbar />
-      <HeroSection />
-      <Categories />
-      <PopularProducts />
-      <WhyChooseUs />
-      <Reviews />
-      <Footer />
-    </MainLayout>
-  );
+
+    return (
+
+        <main className="bg-slate-950 text-white overflow-x-hidden">
+
+            <Hero />
+
+            <SearchBar />
+
+            <Categories />
+
+            <TrendingProducts />
+
+            <BestSeller />
+
+            <WhyChooseUs />
+
+            <CustomerReviews />
+
+            <DeliveryArea />
+
+            <FoodGallery />
+
+            <Footer />
+
+        </main>
+
+    );
+
 };
 
 export default Home;

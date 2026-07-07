@@ -18,7 +18,7 @@ const BottomNavbar = () => {
 
         {
             title: "Home",
-            path: "/",
+            path: "/home",
             icon: <FaHome />
         },
 
@@ -53,11 +53,17 @@ const BottomNavbar = () => {
 
         "/register",
 
-        "/order-success"
+        "/order-success",
+
+        "/menu",
+
+        "/product/:id",
+
 
     ];
 
-    if (hideRoutes.includes(location.pathname)) {
+    if (hideRoutes.includes(location.pathname) ||
+        location.pathname.startsWith("/product/")) {
 
         return null;
 

@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useEffect, useState, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import api from "../../services/api";
 import socket from "../../services/socket";
+import toast from "react-hot-toast";
 
 import {
     GoogleMap,
@@ -10,43 +11,14 @@ import {
     DirectionsRenderer
 } from "@react-google-maps/api";
 
-
-const allStatuses = [
-    "Pending",
-    "Accepted",
-    "Preparing",
-    "Agent Assigned",
-    "Picked Up",
-    "On The Way",
-    "Delivered"
-];
-
-const statusMessages = {
-
-    Pending:
-        "🎉 Order confirmed! We're getting started.",
-
-    Accepted:
-        "✅ Order accepted by restaurant.",
-
-    Preparing:
-        "🍳 Our chefs are preparing your order.",
-
-    "Agent Assigned":
-        "🛵 Delivery partner assigned.",
-
-    "Picked Up":
-        "📦 Order picked up by delivery partner.",
-
-    "On The Way":
-        "📍 Your order is on the way!",
-
-    Delivered:
-        "🍽️ Order delivered. Enjoy your meal!"
-
-};
+import StatusCard from "../../components/tracking/StatusCard";
 
 const shopLocation = {
+    lat: 17.314251,
+    lng: 78.444970
+};
+
+const SHOP_LOCATION = {
     lat: 17.314251,
     lng: 78.444970
 };
@@ -59,6 +31,8 @@ const mapContainerStyle = {
 const TrackOrder = () => {
 
     const { id } = useParams();
+
+    const navigate = useNavigate();
 
     const [order, setOrder] =
         useState(null);
@@ -79,11 +53,14 @@ const TrackOrder = () => {
     const [map, setMap] = useState(null);
     const [myReviews, setMyReviews] = useState({});
     const [animatedLocation, setAnimatedLocation] = useState(null);
-
+    const [heading, setHeading] = useState(0);
+    const animationRef = useRef(null);
+    const previousLocation = useRef(null);
     const [reviewLoading, setReviewLoading] = useState(false);
-    const [travelInfo, setTravelInfo] = useState({ distance: "", duration: "" });
     const [mapApi, setMapApi] = useState(null);
     const [isMapLoaded, setIsMapLoaded] = useState(false);
+    const [liveEta, setLiveEta] = useState(null);
+    const [liveDistance, setLiveDistance] = useState(null);
 
     const fetchMyReviews =
         async (orderData) => {
@@ -167,44 +144,6 @@ const TrackOrder = () => {
         }
 
     };
-
-    const fetchLiveLocation =
-        async () => {
-
-            try {
-
-                const response =
-                    await api.get(
-                        `/orders/live-location/${id}`
-                    );
-
-                if (
-                    response.data?.success &&
-                    response.data.latitude !== undefined &&
-                    response.data.longitude !== undefined &&
-                    response.data.latitude !== null &&
-                    response.data.longitude !== null
-                ) {
-                    setAgentLocation({
-                        latitude:
-                            response.data.latitude,
-                        longitude:
-                            response.data.longitude,
-                        agent:
-                            response.data.agent
-                    });
-                }
-
-            } catch (error) {
-
-                console.log(
-                    "LIVE LOCATION FETCH ERROR:",
-                    error
-                );
-
-            }
-
-        };
 
     // Socket Connection & Event Listeners
 
@@ -313,57 +252,83 @@ const TrackOrder = () => {
 
     useEffect(() => {
 
-        if (!agentLocation) return;
+        if (!agentLocation)
+            return;
 
-        setAnimatedLocation((previous) => {
+        if (!previousLocation.current) {
 
-            if (!previous) {
+            previousLocation.current = agentLocation;
 
-                return agentLocation;
+            setAnimatedLocation(agentLocation);
+
+            return;
+
+        }
+
+        const start = previousLocation.current;
+
+        const end = agentLocation;
+
+        const duration = 1000;
+
+        const startTime = performance.now();
+
+        const animate = (currentTime) => {
+
+            const elapsed = currentTime - startTime;
+
+            const progress = Math.min(
+                elapsed / duration,
+                1
+            );
+
+            const latitude =
+                start.latitude +
+                (end.latitude - start.latitude) *
+                progress;
+
+            const longitude =
+                start.longitude +
+                (end.longitude - start.longitude) *
+                progress;
+
+            const angle =
+                Math.atan2(
+                    end.longitude - start.longitude,
+                    end.latitude - start.latitude
+                ) *
+                (180 / Math.PI);
+
+            setHeading(angle);
+
+            setAnimatedLocation({
+                latitude,
+                longitude
+            });
+
+            if (progress < 1) {
+
+                animationRef.current =
+                    requestAnimationFrame(animate);
+
+            } else {
+
+                previousLocation.current = end;
 
             }
 
-            const startLat = previous.latitude;
-            const startLng = previous.longitude;
+        };
 
-            const endLat = agentLocation.latitude;
-            const endLng = agentLocation.longitude;
+        animationRef.current =
+            requestAnimationFrame(animate);
 
-            let progress = 0;
+        return () => {
 
-            const interval = setInterval(() => {
+            cancelAnimationFrame(
+                animationRef.current
+            );
 
-                progress += 0.05;
-
-                if (progress >= 1) {
-
-                    clearInterval(interval);
-
-                    setAnimatedLocation(agentLocation);
-
-                    return;
-
-                }
-
-                setAnimatedLocation({
-
-                    latitude:
-                        startLat +
-                        (endLat - startLat) *
-                        progress,
-
-                    longitude:
-                        startLng +
-                        (endLng - startLng) *
-                        progress
-
-                });
-
-            }, 30);
-
-            return previous;
-
-        });
+        };
 
     }, [agentLocation]);
 
@@ -400,24 +365,21 @@ const TrackOrder = () => {
 
             (result, status) => {
 
-                if (status === "OK") {
+                if (status !== "OK")
+                    return;
 
-                    setDirections(result);
+                setDirections(result);
 
-                    const leg =
-                        result.routes[0].legs[0];
+                const leg =
+                    result.routes[0].legs[0];
 
-                    setTravelInfo({
+                setLiveEta(
+                    leg.duration.text
+                );
 
-                        distance:
-                            leg.distance.text,
-
-                        duration:
-                            leg.duration.text
-
-                    });
-
-                }
+                setLiveDistance(
+                    leg.distance.text
+                );
 
             }
 
@@ -443,50 +405,93 @@ const TrackOrder = () => {
 
     }
 
-    const currentIndex =
-        allStatuses.indexOf(
-            order.orderStatus
-        );
+    const handleOrderAgain = async () => {
 
-    const currentMessage =
-        statusMessages[
-        order.orderStatus
-        ];
+        try {
 
-    // const fetchMyReviews =
-    //     async (orderData) => {
+            // Clear current cart
 
-    //         try {
+            await api.delete("/cart/clear");
 
-    //             const reviewMap = {};
+            // Add previous order items
 
-    //             for (const item of orderData.items) {
+            for (const item of order.items) {
 
-    //                 const response =
-    //                     await api.get(
-    //                         `/products/review/${item.product}`
-    //                     );
+                await api.post("/cart/add", {
 
-    //                 if (
-    //                     response.data.reviewed
-    //                 ) {
+                    productId: item.product,
 
-    //                     reviewMap[item.product] =
-    //                         response.data.review;
+                    variantName: item.variantName,
 
-    //                 }
+                    quantity: item.quantity
 
-    //             }
+                });
 
-    //             setMyReviews(reviewMap);
+            }
 
-    //         } catch (error) {
+            toast.success("Items added to cart");
 
-    //             console.log(error);
+            navigate("/cart");
 
-    //         }
+        }
 
-    //     };
+        catch (error) {
+
+            console.log(error);
+
+            toast.error("Unable to reorder");
+
+        }
+
+    };
+
+    const handleDownloadInvoice = async () => {
+
+            try {
+
+                const response = await api.get(
+
+                    `/orders/invoice/${order._id}`,
+
+                    {
+
+                        responseType: "blob"
+
+                    }
+
+                );
+
+                const url = window.URL.createObjectURL(
+
+                    new Blob([response.data])
+
+                );
+
+                const link = document.createElement("a");
+
+                link.href = url;
+
+                link.download = `${order.invoiceNumber}.pdf`;
+
+                document.body.appendChild(link);
+
+                link.click();
+
+                link.remove();
+
+                window.URL.revokeObjectURL(url);
+
+            }
+
+            catch (error) {
+
+                console.log(error);
+
+                toast.error("Unable to download invoice");
+
+            }
+
+        };
 
     const submitReview =
         async (productId) => {
@@ -546,152 +551,16 @@ const TrackOrder = () => {
 
             {/* HERO */}
 
-            <div className="bg-slate-900/70 backdrop-blur-xl border border-orange-500/20 rounded-3xl p-8 mb-8">
-
-                <div className="grid lg:grid-cols-2 gap-10 items-center">
-
-                    <div>
-
-                        <p className="text-orange-400 text-sm font-medium mb-2">
-                            LIVE ORDER TRACKING
-                        </p>
-
-                        <h1 className="text-5xl font-bold">
-                            {order.orderStatus}
-                        </h1>
-
-                        <p className="text-slate-400 mt-3">
-                            {currentMessage}
-                        </p>
-
-                        <div className="flex items-center gap-6 mt-6">
-
-                            <div>
-
-                                <h2 className="text-4xl font-bold text-cyan-400">
-                                    {order.estimatedDeliveryTime}
-                                </h2>
-
-                                <p className="text-slate-500">
-                                    mins ETA
-                                </p>
-
-                            </div>
-
-                            <div className="h-12 w-px bg-white/10" />
-
-                            <div>
-
-                                <h2 className="text-2xl font-bold">
-                                    #{order._id.slice(-6)}
-                                </h2>
-
-                                <p className="text-slate-500">
-                                    Order ID
-                                </p>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                    {/* HORIZONTAL PROGRESS */}
-
-                    <div>
-
-                        <div className="flex justify-between items-center">
-
-                            {
-                                allStatuses.map(
-                                    (status, index) => {
-
-                                        const active =
-                                            index <= currentIndex;
-
-                                        return (
-
-                                            <div
-                                                key={status}
-                                                className="flex flex-col items-center flex-1"
-                                            >
-
-                                                <div
-                                                    className={`
-                    w-12 h-12 rounded-full
-                    flex items-center justify-center
-                    font-bold
-
-                    ${active
-                                                            ? "bg-green-500"
-                                                            : "bg-slate-700"
-                                                        }
-                  `}
-                                                >
-
-                                                    {
-                                                        active
-                                                            ? "✓"
-                                                            : index + 1
-                                                    }
-
-                                                </div>
-
-                                                <p className="text-xs text-center mt-3">
-
-                                                    {status}
-
-                                                </p>
-
-                                            </div>
-
-                                        );
-
-                                    }
-                                )
-                            }
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            {
-                travelInfo && (
-
-                    <div className="bg-cyan-500/10 border border-cyan-500 rounded-2xl p-4 mb-4">
-
-                        <h3 className="font-bold text-xl">
-
-                            🚴 Delivery Partner
-
-                        </h3>
-
-                        <p>
-
-                            📍 {travelInfo.distance} away
-
-                        </p>
-
-                        <p>
-
-                            ⏱️ ETA: {travelInfo.duration}
-
-                        </p>
-
-                    </div>
-
-                )
-            }
+            <StatusCard
+                order={order}
+                liveEta={liveEta}
+            />
 
             {/* MAP + LIVE TRACKING */}
 
             <div className="grid lg:grid-cols-4 gap-6 mb-8">
 
-                <div className="lg:col-span-3 bg-slate-900/70 border border-cyan-500/20 rounded-3xl overflow-hidden">
+                <div className="lg:col-span-3 bg-slate-900/70 border border-cyan-500/20 rounded-3xl mt-4 overflow-hidden">
 
                     <div className="h-[500px]">
 
@@ -768,7 +637,12 @@ const TrackOrder = () => {
                                             mapApi
                                                 ? {
                                                     url: "/map-icons/bike.png",
-                                                    scaledSize: new mapApi.Size(50, 50)
+
+                                                    scaledSize: new mapApi.Size(50, 50),
+
+                                                    rotation: heading,
+
+                                                    anchor: new mapApi.Point(25, 25)
                                                 }
                                                 : undefined
                                         }
@@ -779,9 +653,14 @@ const TrackOrder = () => {
                                     directions && (
 
                                         <DirectionsRenderer
-                                            directions={
-                                                directions
-                                            }
+                                            directions={directions}
+                                            options={{
+                                                suppressMarkers: true,
+                                                polylineOptions: {
+                                                    strokeColor: "#f97316",
+                                                    strokeWeight: 6
+                                                }
+                                            }}
                                         />
 
                                     )
@@ -795,54 +674,260 @@ const TrackOrder = () => {
 
                 </div>
 
-                <div className="bg-slate-900/70 border border-cyan-500/20 rounded-3xl p-6">
+                <div className="bg-slate-900/70 rounded-3xl border border-orange-500/20 p-6 mt-4 h-full">
 
-                    <h2 className="text-xl font-bold mb-6">
-                        Live Tracking
-                    </h2>
+                    {
 
-                    <div className="space-y-6">
+                        ["Pending", "Accepted", "Preparing"].includes(order.orderStatus)
 
-                        <div>
+                        &&
 
-                            <p className="text-slate-400">
-                                Status
+                        <>
+
+                            <p className="text-orange-400 font-semibold">
+
+                                🍴 Restaurant
+
                             </p>
 
-                            <h3 className="text-2xl font-bold">
-                                {order.orderStatus}
-                            </h3>
+                            <h2 className="text-3xl font-bold mt-3">
 
-                        </div>
+                                The Samosian
 
-                        <div>
+                            </h2>
 
-                            <p className="text-slate-400">
-                                ETA
+                            <p className="text-slate-400 mt-2">
+
+                                Freshly preparing your order.
+
                             </p>
 
-                            <h3 className="text-2xl font-bold text-cyan-400">
-                                {
-                                    order.estimatedDeliveryTime
-                                }
-                                mins
-                            </h3>
+                            <div className="mt-8 space-y-5">
 
-                        </div>
+                                <div>
 
-                        <div>
+                                    <p className="text-slate-400">
 
-                            <p className="text-slate-400">
-                                Tracking
+                                        Estimated Delivery
+
+                                    </p>
+
+                                    <h3 className="text-4xl font-black text-cyan-400">
+
+                                        {liveEta || `${order.estimatedDeliveryTime} mins`}
+
+                                    </h3>
+
+                                </div>
+
+                                <div>
+
+                                    <p className="text-slate-400">
+
+                                        Contact
+
+                                    </p>
+
+                                    <button className="mt-2 w-full py-3 rounded-xl bg-orange-500 hover:bg-orange-600 font-semibold">
+
+                                        Call Restaurant
+
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        </>
+
+                    }
+
+                    {
+
+                        ["Agent Assigned", "Picked Up", "On The Way"].includes(order.orderStatus)
+
+                        &&
+
+                        <>
+
+                            <p className="text-green-400 font-semibold">
+
+                                🛵 Delivery Partner
+
                             </p>
 
-                            <h3 className="text-green-400">
-                                Live Active
-                            </h3>
+                            <div className="flex items-center gap-4 mt-5">
 
-                        </div>
+                                <div className="w-16 h-16 rounded-full bg-slate-800 overflow-hidden">
 
-                    </div>
+                                    {
+
+                                        order.agent?.profileImage
+
+                                            ?
+
+                                            <img
+
+                                                src={order.agent.profileImage}
+
+                                                alt="Agent"
+
+                                                className="w-full h-full object-cover"
+
+                                            />
+
+                                            :
+
+                                            <div className="w-full h-full flex items-center justify-center text-2xl">
+
+                                                🛵
+
+                                            </div>
+
+                                    }
+
+                                </div>
+
+                                <div>
+
+                                    <h3 className="text-2xl font-bold">
+
+                                        {order.agent?.name}
+
+                                    </h3>
+
+                                    <p className="text-slate-400">
+
+                                        ⭐ 4.9
+
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                            <div className="mt-8 space-y-4">
+
+                                <div className="flex justify-between">
+
+                                    <span>
+
+                                        Distance
+
+                                    </span>
+
+                                    <span>
+
+                                        {liveDistance || "--"}
+
+                                    </span>
+
+                                </div>
+
+                                <div className="flex justify-between">
+
+                                    <span>
+
+                                        ETA
+
+                                    </span>
+
+                                    <span className="text-cyan-400">
+
+                                        {liveEta || "--"}
+
+                                    </span>
+
+                                </div>
+
+                                <div className="flex justify-between">
+
+                                    <span>
+
+                                        Vehicle
+
+                                    </span>
+
+                                    <span>
+
+                                        {order.agent?.vehicleNumber}
+
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                            <a
+
+                                href={`tel:${order.agent?.phone}`}
+
+                                className="mt-8 flex justify-center items-center w-full py-3 rounded-xl bg-green-600 hover:bg-green-700 font-semibold"
+
+                            >
+
+                                Call Delivery Partner
+
+                            </a>
+
+                        </>
+
+                    }
+
+                    {
+
+                        order.orderStatus === "Delivered"
+
+                        &&
+
+                        <>
+
+                            <div className="text-center">
+
+                                <div className="text-6xl">
+
+                                    ✅
+
+                                </div>
+
+                                <h2 className="text-3xl font-bold mt-4">
+
+                                    Delivered
+
+                                </h2>
+
+                                <p className="text-slate-400 mt-2">
+
+                                    Enjoy your meal ❤️
+
+                                </p>
+
+                            </div>
+
+                            <div className="mt-8 space-y-4">
+
+                                <button
+                                    onClick={handleOrderAgain}
+                                    className="w-full py-3 rounded-xl bg-orange-500 hover:bg-orange-600 font-semibold"
+                                >
+                                    Order Again
+                                </button>
+
+                                <button
+
+                                    onClick={() => handleDownloadInvoice()}
+
+                                    className="w-full py-3 rounded-xl border border-white/20"
+
+                                >
+                                    Download Invoice
+                                </button>
+
+                            </div>
+
+                        </>
+
+                    }
 
                 </div>
 
@@ -852,96 +937,7 @@ const TrackOrder = () => {
 
             <div className="grid lg:grid-cols-2 gap-6">
 
-                <div className="bg-slate-900/70 border border-cyan-500/20 rounded-3xl p-6">
-
-                    <h2 className="text-2xl font-bold mb-6">
-                        🚴 Delivery Partner
-                    </h2>
-
-                    {
-
-                        order.agent ? (
-
-                            <>
-
-                                <h3 className="text-3xl font-bold">
-
-                                    {order.agent.name}
-
-                                </h3>
-
-                                <p className="text-slate-400 mt-2">
-
-                                    Vehicle :
-                                    {order.agent.vehicleNumber}
-
-                                </p>
-
-                                <div className="mt-6 space-y-3">
-
-                                    <div className="flex justify-between">
-
-                                        <span>
-
-                                            📍 Distance
-
-                                        </span>
-
-                                        <span className="font-semibold">
-
-                                            {travelInfo.distance}
-
-                                        </span>
-
-                                    </div>
-
-                                    <div className="flex justify-between">
-
-                                        <span>
-
-                                            ⏱ ETA
-
-                                        </span>
-
-                                        <span className="font-semibold text-green-400">
-
-                                            {travelInfo.duration}
-
-                                        </span>
-
-                                    </div>
-
-                                </div>
-
-                                <a
-
-                                    href={`tel:${order.agent.phone}`}
-
-                                    className="mt-6 w-full flex justify-center bg-green-500 hover:bg-green-400 py-3 rounded-2xl font-semibold"
-
-                                >
-
-                                    📞 Call Delivery Partner
-
-                                </a>
-
-                            </>
-
-                        ) : (
-
-                            <p>
-
-                                Waiting for Delivery Partner...
-
-                            </p>
-
-                        )
-
-                    }
-
-                </div>
-
-                <div className="bg-slate-900/70 border border-cyan-500/20 rounded-3xl p-6">
+                <div className="bg-slate-900/70 border border-cyan-500/20 rounded-3xl mb-10 p-6">
 
                     <h2 className="text-2xl font-bold mb-6">
                         Order Summary

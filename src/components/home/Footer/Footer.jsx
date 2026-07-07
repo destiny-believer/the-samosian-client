@@ -182,7 +182,7 @@ const Footer = () => {
 
                                 <span>
 
-                                    +91 XXXXXXXXXX
+                                    +91 9490343702
 
                                 </span>
 
@@ -194,7 +194,7 @@ const Footer = () => {
 
                                 <span>
 
-                                    thesamosian@gmail.com
+                                    shastripranaykumar@gmail.com
 
                                 </span>
 
@@ -206,8 +206,8 @@ const Footer = () => {
 
                                 <span>
 
-                                    Hyderabad,
-                                    Telangana
+                                    Durga Nagar, Mailardevpally,
+                                    Hyderabad, Telangana
 
                                 </span>
 
@@ -243,7 +243,7 @@ const Footer = () => {
 
                                     <p className="text-slate-400">
 
-                                        10:00 AM - 11:00 PM
+                                        11:00 AM - 11:00 PM
 
                                     </p>
 

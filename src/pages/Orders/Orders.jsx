@@ -111,9 +111,9 @@ const Orders = () => {
                             className="flex justify-between mt-2"
                         >
                             <span>
-                                {item.product?.name} x {item.quantity}
+                                {item?.productName} x {item.quantity}
                             </span>
-                            <span>₹{item.price}</span>
+                            <span>₹{item.variantPrice}</span>
                         </div>
                     ))}
                 </div>

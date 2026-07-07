@@ -1,19 +1,33 @@
+import { useNavigate } from "react-router-dom";
 import {
   useNotifications
 }
-from "../../context/NotificationContext";
+  from "../../context/NotificationContext";
+
+import { FiBell } from "react-icons/fi";
 
 const NotificationBell = () => {
+  
+  const navigate = useNavigate();
 
   const {
     notifications
   } = useNotifications();
 
+
   return (
 
-    <div className="relative">
+    <div
+      onClick={() => navigate("/notifications")}
+      className="
+    relative
+    cursor-pointer
+    hover:text-orange-500
+    transition-all
+    "
+    >
 
-      🔔
+      <FiBell size={24} />
 
       {
         notifications.length > 0 && (

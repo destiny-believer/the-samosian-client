@@ -77,7 +77,7 @@ const NavbarV2 = () => {
             "customerToken"
         );
 
-        navigate("/");
+        navigate("/home");
 
     };
 
@@ -85,7 +85,7 @@ const NavbarV2 = () => {
 
         {
             title: "Home",
-            path: "/"
+            path: "/home"
         },
 
         {
@@ -133,17 +133,15 @@ const NavbarV2 = () => {
 
                 duration-500
 
-                ${
+                ${scrolled
 
-                    scrolled
+                    ?
 
-                        ?
+                    "backdrop-blur-xl bg-slate-950/85 border-b border-white/10 shadow-2xl"
 
-                        "backdrop-blur-xl bg-slate-950/85 border-b border-white/10 shadow-2xl"
+                    :
 
-                        :
-
-                        "bg-transparent"
+                    "bg-transparent"
 
                 }
 
@@ -225,17 +223,15 @@ const NavbarV2 = () => {
 
                                         hover:text-orange-500
 
-                                        ${
+                                        ${isActive
 
-                                            isActive
+                                            ?
 
-                                                ?
+                                            "text-orange-500"
 
-                                                "text-orange-500"
+                                            :
 
-                                                :
-
-                                                "text-white"
+                                            "text-white"
 
                                         }
 
@@ -273,7 +269,7 @@ const NavbarV2 = () => {
 
                             className="relative"
 
-                            onClick={()=>
+                            onClick={() =>
 
                                 navigate("/cart")
 
@@ -319,7 +315,7 @@ const NavbarV2 = () => {
 
                                 <button
 
-                                    onClick={()=>
+                                    onClick={() =>
 
                                         navigate("/account")
 
@@ -337,7 +333,7 @@ const NavbarV2 = () => {
 
                                 <button
 
-                                    onClick={()=>
+                                    onClick={() =>
 
                                         navigate("/login")
 
@@ -361,7 +357,7 @@ const NavbarV2 = () => {
 
                         className="lg:hidden"
 
-                        onClick={()=>
+                        onClick={() =>
 
                             setMobileMenu(
 
@@ -379,11 +375,11 @@ const NavbarV2 = () => {
 
                                 ?
 
-                                <FiX size={30}/>
+                                <FiX size={30} />
 
                                 :
 
-                                <FiMenu size={30}/>
+                                <FiMenu size={30} />
 
                         }
 
@@ -411,19 +407,19 @@ const NavbarV2 = () => {
 
                             animate={{
 
-                                x:0
+                                x: 0
 
                             }}
 
                             exit={{
 
-                                x:"100%"
+                                x: "100%"
 
                             }}
 
                             transition={{
 
-                                duration:.35
+                                duration: .35
 
                             }}
 
@@ -435,7 +431,7 @@ const NavbarV2 = () => {
 
                                 {
 
-                                    navItems.map(item=>(
+                                    navItems.map(item => (
 
                                         <NavLink
 
@@ -443,7 +439,7 @@ const NavbarV2 = () => {
 
                                             to={item.path}
 
-                                            onClick={()=>
+                                            onClick={() =>
 
                                                 setMobileMenu(false)
 
@@ -463,7 +459,7 @@ const NavbarV2 = () => {
 
                                 <button
 
-                                    onClick={()=>
+                                    onClick={() =>
 
                                         navigate("/cart")
 
@@ -477,6 +473,20 @@ const NavbarV2 = () => {
 
                                 </button>
 
+                                <button
+                                    onClick={() => {
+
+                                        navigate("/notifications");
+
+                                        setMobileMenu(false);
+
+                                    }}
+                                >
+
+                                    Notifications
+
+                                </button>
+
                                 {
 
                                     customer
@@ -487,7 +497,7 @@ const NavbarV2 = () => {
 
                                             <button
 
-                                                onClick={()=>
+                                                onClick={() =>
 
                                                     navigate("/account")
 
@@ -519,7 +529,7 @@ const NavbarV2 = () => {
 
                                         <button
 
-                                            onClick={()=>
+                                            onClick={() =>
 
                                                 navigate("/login")
 

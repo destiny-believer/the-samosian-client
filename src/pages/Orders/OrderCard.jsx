@@ -101,8 +101,7 @@ const OrderCard = ({ order }) => {
                             <div className="flex gap-4">
 
                                 <img
-
-                                    src={item.product?.image}
+                                    src={`http://localhost:5000${product.image}`}
 
                                     alt={item.product?.name}
 

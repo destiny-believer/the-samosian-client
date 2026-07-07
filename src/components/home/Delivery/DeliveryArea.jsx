@@ -16,11 +16,17 @@ import {
 
 const shopLocation = {
 
-    lat: 17.401742,
-
-    lng: 78.559437
+    lat: 17.314251,
+    lng: 78.444970
 
 };
+
+const SHOP_LOCATION = {
+    lat: 17.314251,
+    lng: 78.444970
+};
+
+
 
 const DeliveryArea = () => {
 
@@ -159,23 +165,23 @@ const DeliveryArea = () => {
 
                         initial={{
 
-                            opacity:0,
+                            opacity: 0,
 
-                            x:-50
+                            x: -50
 
                         }}
 
                         whileInView={{
 
-                            opacity:1,
+                            opacity: 1,
 
-                            x:0
+                            x: 0
 
                         }}
 
                         viewport={{
 
-                            once:true
+                            once: true
 
                         }}
 
@@ -309,9 +315,7 @@ const DeliveryArea = () => {
 
                                         font-bold
 
-                                        ${
-
-                                            eligible
+                                        ${eligible
 
                                             ?
 
@@ -349,11 +353,11 @@ const DeliveryArea = () => {
 
                         <button
 
-                            onClick={()=>
+                            onClick={() =>
 
                                 window.open(
 
-                                    "https://maps.google.com/?q=17.401742,78.559437"
+                                    "https://maps.google.com/?q=17.314251,78.444970"
 
                                 )
 
@@ -375,23 +379,23 @@ const DeliveryArea = () => {
 
                         initial={{
 
-                            opacity:0,
+                            opacity: 0,
 
-                            x:50
+                            x: 50
 
                         }}
 
                         whileInView={{
 
-                            opacity:1,
+                            opacity: 1,
 
-                            x:0
+                            x: 0
 
                         }}
 
                         viewport={{
 
-                            once:true
+                            once: true
 
                         }}
 
@@ -413,11 +417,11 @@ const DeliveryArea = () => {
 
                                 mapContainerStyle={{
 
-                                    width:"100%",
+                                    width: "100%",
 
-                                    height:"600px",
+                                    height: "600px",
 
-                                    borderRadius:"30px"
+                                    borderRadius: "30px"
 
                                 }}
 
@@ -449,19 +453,19 @@ const DeliveryArea = () => {
 
                                 <Circle
 
-                                    center={shopLocation}
+                                    center={SHOP_LOCATION}
 
                                     radius={3000}
 
                                     options={{
 
-                                        fillColor:"#f97316",
+                                        fillColor: "#f97316",
 
-                                        fillOpacity:.15,
+                                        fillOpacity: .15,
 
-                                        strokeColor:"#f97316",
+                                        strokeColor: "#f97316",
 
-                                        strokeWeight:2
+                                        strokeWeight: 2
 
                                     }}
 

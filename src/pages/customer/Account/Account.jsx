@@ -1,20 +1,27 @@
 // Account.jsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useNotifications } from "../../../context/NotificationContext";
 import { FaBoxOpen, FaMapMarkerAlt, FaHeart, FaStar, FaBell, FaQuestionCircle, FaInfoCircle, FaSignOutAlt, FaChevronRight, FaUserEdit } from "react-icons/fa";
 import api from "../../../services/api";
 
 const menuItems = [
     { title: "My Orders", subtitle: "View your previous orders", icon: FaBoxOpen, path: "/my-orders" },
     { title: "Saved Addresses", subtitle: "Manage delivery addresses", icon: FaMapMarkerAlt, path: "/addresses" },
-    { title: "Favorites", subtitle: "Your favourite food items", icon: FaHeart, path: "/favorites" },
+    {
+        title: "Wishlist",
+        subtitle: "Your favourite food items",
+        icon: FaHeart,
+        path: "/wishlist"
+    },
     { title: "My Reviews", subtitle: "Ratings & reviews", icon: FaStar, path: "/my-reviews" },
     { title: "Notifications", subtitle: "Recent updates", icon: FaBell, path: "/notifications" },
-    { title: "Help & Support", subtitle: "Need assistance?", icon: FaQuestionCircle, path: "/help" },
-    { title: "About Samosian", subtitle: "Version & information", icon: FaInfoCircle, path: "/about" }
+    { title: "Help & Support", subtitle: "Need assistance?", icon: FaQuestionCircle, path: "/help-support" },
+    { title: "About Samosian", subtitle: "Version & information", icon: FaInfoCircle, path: "/about-samosian" }
 ];
 
 function Account() {
+    const { unreadCount } = useNotifications();
     const navigate = useNavigate();
     const [customer, setCustomer] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -64,7 +71,41 @@ function Account() {
                     return <div key={i} onClick={() => navigate(m.path)} className="cursor-pointer rounded-3xl bg-slate-900/60 border border-orange-500/20 p-6 hover:border-orange-500 transition">
                         <div className="flex justify-between items-center">
                             <div className="flex gap-5 items-center">
-                                <div className="w-14 h-14 rounded-2xl bg-orange-500/20 flex items-center justify-center text-orange-400 text-2xl"><Icon /></div>
+                                <div className="relative">
+
+                                    <div className="w-14 h-14 rounded-2xl bg-orange-500/20 flex items-center justify-center text-orange-400 text-2xl">
+
+                                        <Icon />
+
+                                    </div>
+
+                                    {
+
+                                        m.title === "Notifications"
+
+                                        &&
+
+                                        unreadCount > 0
+
+                                        &&
+
+                                        (
+
+                                            <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+
+                                                {
+
+                                                    unreadCount
+
+                                                }
+
+                                            </div>
+
+                                        )
+
+                                    }
+
+                                </div>
                                 <div><h3 className="text-xl font-semibold">{m.title}</h3><p className="text-slate-400 text-sm">{m.subtitle}</p></div>
                             </div><FaChevronRight className="text-slate-500" /></div></div>
                 })}

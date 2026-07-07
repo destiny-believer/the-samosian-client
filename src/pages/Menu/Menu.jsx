@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import api from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/navbar/Navbar";
 import MainLayout from "../../layouts/MainLayout";
 import FloatingCartBar from "../Cart/FloatingCartBar";
 import CartDrawer from "../Cart/CartDrawer";
+import { getImageUrl } from "../../utils/image.js";
 
 const Menu = () => {
 
@@ -30,6 +30,12 @@ const Menu = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
 
   const [favorites, setFavorites] = useState([]);
+
+  const [filteredProducts, setFilteredProducts] = useState([]);
+
+  const [searchLoading, setSearchLoading] = useState(false);
+
+  const [sortBy, setSortBy] = useState("default");
 
   const categories = [
 
@@ -57,7 +63,10 @@ const Menu = () => {
         const response =
           await api.get("/products");
 
-        setProducts(
+        setProducts(response.data.products
+        );
+
+        setFilteredProducts(
           response.data.products
         );
 
@@ -68,6 +77,174 @@ const Menu = () => {
       }
 
     };
+
+  const searchProducts = async (keyword) => {
+
+    try {
+
+      if (!keyword.trim()) {
+
+        const filtered =
+
+          selectedCategory === "All"
+
+            ? products
+
+            : products.filter(
+
+              product =>
+
+                product.category?.name ===
+
+                selectedCategory
+
+            );
+
+        setFilteredProducts(sortProducts(filtered));
+
+        return;
+
+      }
+
+      setSearchLoading(true);
+
+      const response = await api.get(
+
+        `/products/search?keyword=${keyword}`
+
+      );
+
+      let data = response.data.products;
+
+      if (selectedCategory !== "All") {
+
+        data = data.filter(
+
+          product =>
+
+            product.category?.name ===
+
+            selectedCategory
+
+        );
+
+      }
+
+      setFilteredProducts(sortProducts(data));
+
+    }
+
+    catch (error) {
+
+      console.log(error);
+
+    }
+
+    finally {
+
+      setSearchLoading(false);
+
+    }
+
+  };
+
+  const sortProducts = (products) => {
+
+    let sorted = [...products];
+
+    switch (sortBy) {
+
+      case "price-low":
+
+        sorted.sort(
+
+          (a, b) =>
+
+            a.variants[0].price -
+
+            b.variants[0].price
+
+        );
+
+        break;
+
+      case "price-high":
+
+        sorted.sort(
+
+          (a, b) =>
+
+            b.variants[0].price -
+
+            a.variants[0].price
+
+        );
+
+        break;
+
+      case "rating":
+
+        sorted.sort(
+
+          (a, b) =>
+
+            b.rating -
+
+            a.rating
+
+        );
+
+        break;
+
+      case "preparation":
+
+        sorted.sort(
+
+          (a, b) =>
+
+            a.preparationTime -
+
+            b.preparationTime
+
+        );
+
+        break;
+
+      case "featured":
+
+        sorted.sort(
+
+          (a, b) =>
+
+            b.isFeatured -
+
+            a.isFeatured
+
+        );
+
+        break;
+
+      default:
+
+        break;
+
+    }
+
+    return sorted;
+
+  };
+
+  useEffect(() => {
+
+    const timer = setTimeout(() => {
+
+      searchProducts(search);
+
+    }, 300);
+
+    return () => clearTimeout(timer);
+
+  }, [search, selectedCategory, sortBy, products]);
 
   const handleQuickAdd = (
     product
@@ -117,6 +294,7 @@ const Menu = () => {
       // setShowCartDrawer(
       //   true
       // );
+
     } catch (error) {
 
       console.log(error);
@@ -152,9 +330,6 @@ const Menu = () => {
           totalAmount: cart.totalAmount,
         });
 
-        console.log(
-          cart
-        );
 
       } catch (error) {
 
@@ -337,33 +512,6 @@ const Menu = () => {
 
     };
 
-  const filteredProducts = products
-
-    .filter(product =>
-
-      product.name
-
-        .toLowerCase()
-
-        .includes(
-
-          search.toLowerCase()
-
-        )
-
-    )
-
-    .filter(product =>
-
-      selectedCategory === "All"
-
-      ||
-
-      product.category.name ===
-      selectedCategory
-
-    );
-
   useEffect(() => {
 
     fetchProducts();
@@ -380,17 +528,17 @@ const Menu = () => {
       <Navbar />
       <div className="min-h-screen pt-10 max-w-7xl mx-auto px-5 lg:px-8">
 
-        <div className="sticky top-20 z-40 bg-[#0f172a] pb-6">
-          <h1
-            style={{ fontFamily: "Outfit" }}
-            className="text-4xl font-bold mb-8"
-          >
-            Explore Menu
-          </h1>
+        <h1
+          style={{ fontFamily: "Outfit" }}
+          className="text-4xl shadow-lg font-bold mb-2"
+        >
+          Explore Menu
+        </h1>
+        <div className="sticky top-20 z-40 bg-[#0f172a]">
 
           <div
             className="
-        mb-8
+        mb-2
     "
           >
 
@@ -401,15 +549,15 @@ const Menu = () => {
             bg-white/5
             border
             border-orange-500/20
-            rounded-2xl
+            rounded-full
             px-5
-            py-3
+            py-2
         "
             >
 
               <span
                 className="
-                text-2xl
+                text-lg
             "
               >
 
@@ -439,7 +587,7 @@ Search for your favourite food...
                 flex-1
                 bg-transparent
                 outline-none
-                ml-3
+                ml-2
                 text-lg
             "
 
@@ -454,7 +602,7 @@ Search for your favourite food...
         flex
         gap-3
         overflow-x-auto
-        mb-6
+        mb-2
         scrollbar-hide
     "
           >
@@ -535,46 +683,195 @@ Search for your favourite food...
           </div>
 
         </div>
+        <div>
 
-        <div
-          className="
-        flex
-        justify-between
-        items-center
-        mb-6
-    "
-        >
+          <div className="flex justify-between items-center mb-3">
 
-          <p
-            className="
-            text-slate-400
-        "
-          >
+            <p className="text-slate-400">
 
-            Showing
+              Showing
 
-            <span
-              className="
-                text-orange-500
-                font-bold
-            "
-            >
+              <span className="text-orange-500 font-bold">
 
-              {" "}
-              {filteredProducts.length}
-              {" "}
+                {" "}
+                {filteredProducts.length}
+                {" "}
 
-            </span>
+              </span>
 
-            dishes
+              dishes
 
-          </p>
+            </p>
+
+            <div className="flex gap-3 overflow-x-auto scrollbar-hide">
+
+              <button
+
+                onClick={() => setSortBy("default")}
+
+                className={
+
+                  sortBy === "default"
+
+                    ?
+
+                    "px-5 py-2 rounded-full bg-orange-500 whitespace-nowrap"
+
+                    :
+
+                    "px-5 py-2 rounded-full bg-white/5 border border-orange-500/20 whitespace-nowrap"
+
+                }
+
+              >
+
+                ⭐ Recommended
+
+              </button>
+
+              <button
+
+                onClick={() => setSortBy("price-low")}
+
+                className={
+
+                  sortBy === "price-low"
+
+                    ?
+
+                    "px-5 py-2 rounded-full bg-orange-500 whitespace-nowrap"
+
+                    :
+
+                    "px-5 py-2 rounded-full bg-white/5 border border-orange-500/20 whitespace-nowrap"
+
+                }
+
+              >
+
+                ₹ Low → High
+
+              </button>
+
+              <button
+
+                onClick={() => setSortBy("price-high")}
+
+                className={
+
+                  sortBy === "price-high"
+
+                    ?
+
+                    "px-5 py-2 rounded-full bg-orange-500 whitespace-nowrap"
+
+                    :
+
+                    "px-5 py-2 rounded-full bg-white/5 border border-orange-500/20 whitespace-nowrap"
+
+                }
+
+              >
+
+                ₹ High → Low
+
+              </button>
+
+              <button
+
+                onClick={() => setSortBy("rating")}
+
+                className={
+
+                  sortBy === "rating"
+
+                    ?
+
+                    "px-5 py-2 rounded-full bg-orange-500 whitespace-nowrap"
+
+                    :
+
+                    "px-5 py-2 rounded-full bg-white/5 border border-orange-500/20 whitespace-nowrap"
+
+                }
+
+              >
+
+                ⭐ Highest Rated
+
+              </button>
+
+              <button
+
+                onClick={() => setSortBy("preparation")}
+
+                className={
+
+                  sortBy === "preparation"
+
+                    ?
+
+                    "px-5 py-2 rounded-full bg-orange-500 whitespace-nowrap"
+
+                    :
+
+                    "px-5 py-2 rounded-full bg-white/5 border border-orange-500/20 whitespace-nowrap"
+
+                }
+
+              >
+
+                ⏱ Fastest
+
+              </button>
+
+              <button
+
+                onClick={() => setSortBy("featured")}
+
+                className={
+
+                  sortBy === "featured"
+
+                    ?
+
+                    "px-5 py-2 rounded-full bg-orange-500 whitespace-nowrap"
+
+                    :
+
+                    "px-5 py-2 rounded-full bg-white/5 border border-orange-500/20 whitespace-nowrap"
+
+                }
+
+              >
+
+                🔥 Featured
+
+              </button>
+
+            </div>
+
+          </div>
 
         </div>
-
         {
 
-          filteredProducts.length === 0
+          searchLoading && (
+
+            <div className="flex justify-center py-20">
+
+              <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+
+            </div>
+
+          )
+
+        }
+
+        {
+          !searchLoading &&
+
+            filteredProducts.length === 0
 
             ?
 
@@ -595,9 +892,7 @@ text-3xl
 
 font-bold
 
-mt-5
-
-"
+mt-5"
 
                 >
 
@@ -679,24 +974,17 @@ rounded-xl
 
 
                       <img
-
-                        src={
-
-                          product.image ||
-
-                          "https://placehold.co/600x400?text=No+Image"
-
-                        }
-
+                        src={getImageUrl(product.image)}
                         alt={product.name}
 
                         className="
 
             w-full
 
-            h-60
+            aspect-square
 
-            object-cover
+            object-contain
+            rounded-t-3xl
 
         "
 
@@ -816,7 +1104,11 @@ rounded-xl
 
 
 
-                        ⭐ {product.rating || 0}
+                        {
+                          product.totalRatings > 0
+                            ? `⭐ ${product.rating.toFixed(1)}`
+                            : "🆕 New"
+                        }
 
 
 
@@ -918,7 +1210,10 @@ rounded-xl
 
                       <p className="text-gray-400 mt-2">
 
-                        {product.description}
+                        {
+                          product.description ||
+                          "Freshly prepared with premium ingredients."
+                        }
 
                       </p>
 

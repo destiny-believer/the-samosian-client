@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../../services/api";
 import { useNavigate } from "react-router-dom";
+import { getImageUrl } from "../../utils/image";
 
 const Cart = () => {
     const [cart, setCart] = useState(null);
@@ -241,7 +242,7 @@ const Cart = () => {
                                         <div className="flex gap-5">
 
                                             <img
-                                                src={item.product.image || "https://placehold.co/120x120?text=Food"}
+                                                src={getImageUrl(item.product.image)}
                                                 alt={item.product.name}
                                                 className="w-28 h-28 rounded-2xl object-cover"
                                             />
@@ -392,6 +393,7 @@ const Cart = () => {
       border
       border-orange-500/20
       rounded-3xl
+      mb-10
       p-6
     ">
 

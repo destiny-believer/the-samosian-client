@@ -8,9 +8,10 @@ import CustomerReviews from "../../components/home/Reviews/CustomerReviews";
 import DeliveryArea from "../../components/home/Delivery/DeliveryArea";
 import FoodGallery from "../../components/home/Gallery/FoodGallery";
 import Footer from "../../components/home/Footer/Footer";
+import RecentlyViewed from "../../components/home/RecentlyViewed/RecentlyViewed";
 
 const Home = () => {
-
+    
     return (
 
         <main className="bg-slate-950 text-white overflow-x-hidden">
@@ -24,6 +25,8 @@ const Home = () => {
             <TrendingProducts />
 
             <BestSeller />
+
+            <RecentlyViewed />
 
             <WhyChooseUs />
 

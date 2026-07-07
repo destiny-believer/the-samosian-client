@@ -20,14 +20,19 @@ import Account from "../pages/customer/Account/Account";
 import Favorites from "../pages/customer/Favorites/Favorites";
 import BottomNavbar from "../components/navigation/BottomNavbar";
 import Orders from "../pages/Orders/Orders";
+import Wishlist from "../pages/customer/WishList";
+import HelpSupport from "../pages/HelpSupport/HelpSupport";
+import About from "../pages/customer/About/About";
+import Notifications from "../pages/customer/Notifications/Notifications";
 
 const AppRoutes = () => {
   return (
     <BrowserRouter>
+      
       <Routes>
 
         <Route
-          path="/"
+          path="/home"
           element={<Home />}
         />
 
@@ -47,10 +52,14 @@ const AppRoutes = () => {
           }
         />
 
-        <Route path="/edit-profile" element={<EditProfile/>}/>
-        <Route path="/account" element={<Account/>}/>
-        <Route path="/favorites" element={<Favorites/>}/>
-        <Route path="/Orders" element={<Orders/>}/>
+        <Route path="/edit-profile" element={<EditProfile />} />
+        <Route path="/account" element={<Account />} />
+        <Route path="/favorites" element={<Favorites />} />
+        <Route path="/Orders" element={<Orders />} />
+        <Route path="/wishlist" element={<Wishlist />} />
+        <Route path="/help-support" element={<HelpSupport />} />
+        <Route path="/about-samosian" element={<About />}/>
+        <Route path="/notifications" element={<Notifications />}/>
       </Routes>
       <BottomNavbar />
     </BrowserRouter>

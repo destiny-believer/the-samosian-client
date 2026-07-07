@@ -2,9 +2,11 @@ import {
   createContext,
   useContext,
   useEffect,
-  useState
+  useState,
+  useCallback
 } from "react";
 
+import api from "../services/api";
 import socket from "../services/socket";
 
 const NotificationContext =
@@ -18,75 +20,184 @@ export const NotificationProvider =
       setNotifications
     ] = useState([]);
 
+    const [
+
+      unreadCount,
+
+      setUnreadCount
+
+    ] = useState(0);
+
+    const fetchNotifications = useCallback(async () => {
+
+      try {
+
+        const res = await api.get("/notifications");
+
+        setNotifications(res.data.notifications);
+
+      }
+
+      catch (error) {
+
+        console.log(error);
+
+      }
+
+    }, []);
+
+    const fetchUnreadCount = useCallback(async () => {
+
+      try {
+
+        const res = await api.get(
+
+          "/notifications/unread-count"
+
+        );
+
+        setUnreadCount(
+
+          res.data.unreadCount
+
+        );
+
+      }
+
+      catch (error) {
+
+        console.log(error);
+
+      }
+
+    }, []);
+
     useEffect(() => {
 
+      fetchNotifications();
+
+      fetchUnreadCount();
+
       socket.on(
+
         "order-status-updated",
-        data => {
 
-          const message =
-            getMessage(
-              data.orderStatus
-            );
+        notification => {
 
-          setNotifications(
-            previous => [
+          setNotifications(previous => [
 
-              {
-                id: Date.now(),
-                message
-              },
+            notification,
 
-              ...previous
+            ...previous
 
-            ]
-          );
+          ]);
+
+          setUnreadCount(previous => previous + 1);
 
         }
+
       );
 
       return () => {
 
         socket.off(
+
           "order-status-updated"
+
         );
 
       };
 
-    }, []);
+    }, [
 
-    const getMessage =
-      status => {
+      fetchNotifications,
 
-        switch(status){
+      fetchUnreadCount
 
-          case "Pending":
-            return "📦 Order confirmed";
+    ]);
 
-          case "Preparing":
-            return "🍳 Order is being prepared";
+    const getTitle = status => {
 
-          case "Ready For Pickup":
-            return "📍 Ready for pickup";
+      switch (status) {
 
-          case "Out For Delivery":
-            return "🛵 Delivery partner is on the way";
+        case "Pending":
+          return "Order Confirmed";
 
-          case "Delivered":
-            return "✅ Order delivered successfully";
+        case "Accepted":
+          return "Restaurant Accepted";
 
-          default:
-            return status;
+        case "Preparing":
+          return "Preparing Your Food";
 
-        }
+        case "Agent Assigned":
+          return "Delivery Partner Assigned";
 
-      };
+        case "Picked Up":
+          return "Order Picked Up";
+
+        case "On The Way":
+          return "On The Way";
+
+        case "Delivered":
+          return "Delivered";
+
+        default:
+          return "Order Update";
+
+      }
+
+    };
+
+    const getMessage = status => {
+
+      switch (status) {
+
+        case "Pending":
+          return "We've received your order.";
+
+        case "Accepted":
+          return "Restaurant accepted your order.";
+
+        case "Preparing":
+          return "Our chefs are preparing your food.";
+
+        case "Agent Assigned":
+          return "Delivery partner assigned.";
+
+        case "Picked Up":
+          return "Your order has been picked up.";
+
+        case "On The Way":
+          return "Your order is on the way.";
+
+        case "Delivered":
+          return "Enjoy your meal ❤️";
+
+        case "Cancelled":
+          return "Your order was cancelled.";
+
+        default:
+          return status;
+
+      }
+
+    };
 
     return (
 
       <NotificationContext.Provider
         value={{
-          notifications
+
+          notifications,
+
+          unreadCount,
+
+          setUnreadCount,
+
+          fetchNotifications,
+
+          fetchUnreadCount
+
         }}
       >
 
@@ -96,7 +207,7 @@ export const NotificationProvider =
 
     );
 
-};
+  };
 
 export const useNotifications =
   () =>

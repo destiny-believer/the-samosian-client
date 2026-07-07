@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import api from "../../services/api";
+import toast from "react-hot-toast";
+import { getImageUrl } from "../../utils/image.js";
 
 const ProductDetails = () => {
 
@@ -18,6 +20,8 @@ const ProductDetails = () => {
     const [customer, setCustomer] = useState(null);
     const [myReview, setMyReview] = useState(null);
     const [showReviewBox, setShowReviewBox] = useState(false);
+    const [reviewRating, setReviewRating] = useState(5);
+    const [reviewComment, setReviewComment] = useState("");
 
     const fetchProduct = async () => {
 
@@ -29,6 +33,8 @@ const ProductDetails = () => {
             const fetchedProduct = response.data.product;
 
             setProduct(fetchedProduct);
+
+            saveRecentlyViewed(fetchedProduct);
 
             await fetchRelatedProducts(fetchedProduct);
 
@@ -69,7 +75,6 @@ const ProductDetails = () => {
         }
 
     };
-
 
     const fetchRelatedProducts = async (currentProduct) => {
 
@@ -216,6 +221,29 @@ const ProductDetails = () => {
 
         };
 
+    const saveRecentlyViewed = (product) => {
+
+        let recent = JSON.parse(
+            localStorage.getItem("recentProducts")
+        ) || [];
+
+        recent = recent.filter(
+            item => item._id !== product._id
+        );
+
+        recent.unshift(product);
+
+        if (recent.length > 10) {
+            recent.pop();
+        }
+
+        localStorage.setItem(
+            "recentProducts",
+            JSON.stringify(recent)
+        );
+
+    };
+
     if (!product) {
         return (
             <div className="pt-32 text-center">
@@ -229,25 +257,12 @@ const ProductDetails = () => {
 
             <button
                 onClick={() => navigate(-1)}
-                className="flex items-center gap-2 text-orange-500 font-semibold mb-8 hover:text-orange-400 transition-all"
+                className="flex items-center gap-2 text-orange-500 font-semibold mb-8 hover:text-orange-400 text-right transition-all"
             >
                 ← Back to Menu
             </button>
 
             <div className="grid lg:grid-cols-2 gap-8">
-
-                <div>
-
-                    <img
-                        ssrc={
-                            product.image ||
-                            "https://placehold.co/500x500?text=No+Image"
-                        }
-                        alt={product.name}
-                        className="w-full rounded-3xl"
-                    />
-
-                </div>
 
                 <div>
 
@@ -263,9 +278,9 @@ const ProductDetails = () => {
                     <div className="relative">
 
                         <img
-                            src={product.image || "https://placehold.co/700x500?text=No+Image"}
+                            src={getImageUrl(product.image)}
                             alt={product.name}
-                            className="w-full h-[500px] object-cover rounded-3xl"
+                            className="w-full h-[500px] object-contain rounded-3xl"
                         />
 
                         <button
@@ -553,7 +568,7 @@ const ProductDetails = () => {
 
                             <span className="text-orange-500 font-semibold">
 
-                                {product.totalRatings} Reviews
+                                {product.totalReviews} Reviews
 
                             </span>
 
@@ -577,7 +592,7 @@ const ProductDetails = () => {
 
                                 <p className="text-slate-400">
 
-                                    Based on {product.totalRatings} customer reviews
+                                    Based on {product.totalReviews} customer reviews
 
                                 </p>
 
@@ -690,16 +705,97 @@ const ProductDetails = () => {
 
                                         }
 
+                                        {/* Write Review */}
+
                                         {
 
-                                            product.reviews.length > 3 &&
-
-                                            (
+                                            !myReview && (
 
                                                 <div className="text-center mt-8">
 
                                                     <button
+
+                                                        onClick={() => {
+
+                                                            setReviewRating(5);
+
+                                                            setReviewComment("");
+
+                                                            setShowReviewBox(true);
+
+                                                        }}
+
+                                                        className="px-8 py-3 bg-orange-500 rounded-xl hover:bg-orange-600 transition-all"
+
+                                                    >
+
+                                                        ⭐ Write Review
+
+                                                    </button>
+
+                                                </div>
+
+                                            )
+
+                                        }
+
+
+                                        {/* Edit/Delete Review */}
+
+                                        {
+
+                                            myReview && (
+
+                                                <div className="flex justify-center gap-4 mt-8">
+
+                                                    <button
+
+                                                        onClick={() => {
+
+                                                            setReviewRating(myReview.rating);
+
+                                                            setReviewComment(myReview.comment);
+
+                                                            setShowReviewBox(true);
+
+                                                        }}
+                                                        className="px-6 py-3 bg-blue-500 rounded-xl hover:bg-blue-600"
+
+                                                    >
+
+                                                        ✏ Edit Review
+
+                                                    </button>
+
+                                                    <button
+
+                                                        className="px-6 py-3 bg-red-500 rounded-xl hover:bg-red-600"
+
+                                                    >
+
+                                                        🗑 Delete Review
+
+                                                    </button>
+
+                                                </div>
+
+                                            )
+
+                                        }
+
+
+                                        {/* View All Reviews */}
+
+                                        {
+
+                                            product.reviews.length > 3 && (
+
+                                                <div className="text-center mt-8">
+
+                                                    <button
+
                                                         className="px-6 py-3 border border-orange-500 rounded-xl hover:bg-orange-500 transition-all"
+
                                                     >
 
                                                         View All Reviews
@@ -710,14 +806,30 @@ const ProductDetails = () => {
 
                                             )
 
-                                        }
-                                    </div>
+                                        }                                    </div>
 
                                 )
 
                         }
 
                     </div>
+
+                    {
+                        !myReview && (
+
+                            <div className="text-center mt-8">
+
+                                <button
+                                    onClick={() => setShowReviewBox(true)}
+                                    className="px-8 py-3 bg-orange-500 rounded-xl hover:bg-orange-600"
+                                >
+                                    ⭐ Write Review
+                                </button>
+
+                            </div>
+
+                        )
+                    }
 
                 </div>
 
@@ -804,7 +916,7 @@ const ProductDetails = () => {
 
                                     <span className="text-slate-400">
 
-                                        ({product.totalRatings} Reviews)
+                                        ({product.totalReviews} Reviews)
 
                                     </span>
 
@@ -962,6 +1074,119 @@ const ProductDetails = () => {
                 </div>
 
             </div>
+            {
+                showReviewBox && (
+
+                    <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50">
+
+                        <div className="bg-slate-900 rounded-3xl p-8 w-full max-w-lg">
+
+                            <h2 className="text-3xl font-bold mb-6">
+
+                                {myReview ? "Edit Review" : "Write Review"}
+
+                            </h2>
+
+                            <div className="flex gap-2 mb-6">
+
+                                {
+
+                                    [1, 2, 3, 4, 5].map(star => (
+
+                                        <button
+
+                                            key={star}
+
+                                            onClick={() => setReviewRating(star)}
+
+                                            className="text-4xl"
+
+                                        >
+
+                                            {
+
+                                                star <= reviewRating
+
+                                                    ?
+
+                                                    "⭐"
+
+                                                    :
+
+                                                    "☆"
+
+                                            }
+
+                                        </button>
+
+                                    ))
+
+                                }
+
+                            </div>
+
+                            <textarea
+
+                                value={reviewComment}
+
+                                onChange={(e) =>
+
+                                    setReviewComment(e.target.value)
+
+                                }
+
+                                rows={5}
+
+                                placeholder="Share your experience..."
+
+                                className="w-full rounded-2xl bg-slate-800 p-4 outline-none"
+
+                            />
+
+                            <div className="flex justify-end gap-4 mt-8">
+
+                                <button
+
+                                    onClick={() => setShowReviewBox(false)}
+
+                                    className="px-6 py-3 border border-white/20 rounded-xl"
+
+                                >
+
+                                    Cancel
+
+                                </button>
+
+                                <button
+
+                                    className="px-6 py-3 bg-orange-500 rounded-xl"
+
+                                >
+
+                                    {
+
+                                        myReview
+
+                                            ?
+
+                                            "Update Review"
+
+                                            :
+
+                                            "Submit Review"
+
+                                    }
+
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                )
+            }
         </div>
     );
 };

@@ -52,7 +52,7 @@ const MyOrders = () => {
                   ? {
                     ...order,
                     orderStatus:
-                      data.status
+                      data.orderStatus
                   }
 
                   : order
@@ -83,6 +83,8 @@ const MyOrders = () => {
         await api.post(
           `/orders/reorder/${orderId}`
         );
+
+        alert("Items added to cart successfully!");
 
         navigate("/cart");
 
@@ -215,6 +217,12 @@ const MyOrders = () => {
                     {order.items.length}
                     {" "}
                     Items
+
+                  </p>
+
+                  <p className="text-slate-500 text-sm mt-1">
+
+                    {new Date(order.createdAt).toLocaleDateString()}
 
                   </p>
 

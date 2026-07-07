@@ -15,15 +15,39 @@ const Addresses = () => {
 
   const [formData, setFormData] =
     useState({
+
       label: "Home",
+
+      receiverName: "",
+
+      phoneNumber: "",
+
       houseNo: "",
+
+      apartment: "",
+
       street: "",
+
       landmark: "",
+
+      area: "",
+
       city: "",
+
+      state: "",
+
       pincode: "",
+
       latitude: "",
+
       longitude: "",
+
+      formattedAddress: "",
+
+      deliveryInstructions: "",
+
       isDefault: false
+
     });
 
   useEffect(() => {
@@ -60,15 +84,39 @@ const Addresses = () => {
       setEditingId(null);
 
       setFormData({
+
         label: "Home",
+
+        receiverName: "",
+
+        phoneNumber: "",
+
         houseNo: "",
+
+        apartment: "",
+
         street: "",
+
         landmark: "",
+
+        area: "",
+
         city: "",
+
+        state: "",
+
         pincode: "",
+
         latitude: "",
+
         longitude: "",
+
+        formattedAddress: "",
+
+        deliveryInstructions: "",
+
         isDefault: false
+
       });
 
     };
@@ -125,32 +173,39 @@ const Addresses = () => {
       );
 
       setFormData({
-        label:
-          address.label || "Home",
 
-        houseNo:
-          address.houseNo || "",
+        label: address.label || "Home",
 
-        street:
-          address.street || "",
+        receiverName: address.receiverName || "",
 
-        landmark:
-          address.landmark || "",
+        phoneNumber: address.phoneNumber || "",
 
-        city:
-          address.city || "",
+        houseNo: address.houseNo || "",
 
-        pincode:
-          address.pincode || "",
+        apartment: address.apartment || "",
 
-        latitude:
-          address.latitude || "",
+        street: address.street || "",
 
-        longitude:
-          address.longitude || "",
+        landmark: address.landmark || "",
 
-        isDefault:
-          address.isDefault || false
+        area: address.area || "",
+
+        city: address.city || "",
+
+        state: address.state || "",
+
+        pincode: address.pincode || "",
+
+        latitude: address.location?.latitude || "",
+
+        longitude: address.location?.longitude || "",
+
+        formattedAddress: address.formattedAddress || "",
+
+        deliveryInstructions: address.deliveryInstructions || "",
+
+        isDefault: address.isDefault || false
+
       });
 
       window.scrollTo({
@@ -174,7 +229,7 @@ const Addresses = () => {
       try {
 
         await api.delete(
-          `/customer/address/${id}`
+          `/customers/address/${id}`
         );
 
         fetchAddresses();
@@ -201,7 +256,7 @@ const Addresses = () => {
               ) {
 
                 return api.put(
-                  `/customer/address/${address._id}`,
+                  `/customers/address/${address._id}`,
                   {
                     ...address,
                     isDefault: true
@@ -211,7 +266,7 @@ const Addresses = () => {
               }
 
               return api.put(
-                `/customer/address/${address._id}`,
+                `/customers/address/${address._id}`,
                 {
                   ...address,
                   isDefault: false
@@ -411,24 +466,70 @@ const Addresses = () => {
                     <div className="space-y-2 text-slate-300">
 
                       <p>
+
+                        <strong>
+
+                          {address.receiverName}
+
+                        </strong>
+
+                      </p>
+
+                      <p>
+
+                        {address.phoneNumber}
+
+                      </p>
+
+                      <p>
+
                         {address.houseNo}
+
+                        {address.apartment && `, ${address.apartment}`}
+
                       </p>
 
                       <p>
+
                         {address.street}
+
                       </p>
 
                       <p>
+
                         {address.landmark}
+
                       </p>
 
                       <p>
-                        {address.city}
+
+                        {address.area}
+
                       </p>
 
                       <p>
+
+                        {address.city},
+
+                        {address.state}
+
+                      </p>
+
+                      <p>
+
                         {address.pincode}
+
                       </p>
+
+                      {address.deliveryInstructions && (
+
+                        <p className="text-cyan-400">
+
+                          📝 {address.deliveryInstructions}
+
+                        </p>
+
+                      )}
 
                     </div>
 

@@ -18,7 +18,7 @@ const BottomNavbar = () => {
 
         {
             title: "Home",
-            path: "/home",
+            path: "/",
             icon: <FaHome />
         },
 

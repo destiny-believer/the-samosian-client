@@ -32,7 +32,7 @@ const AppRoutes = () => {
       <Routes>
 
         <Route
-          path="/home"
+          path="/"
           element={<Home />}
         />
 

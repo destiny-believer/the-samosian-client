@@ -77,7 +77,7 @@ const NavbarV2 = () => {
             "customerToken"
         );
 
-        navigate("/home");
+        navigate("/");
 
     };
 
@@ -85,7 +85,7 @@ const NavbarV2 = () => {
 
         {
             title: "Home",
-            path: "/home"
+            path: "/"
         },
 
         {

@@ -23,7 +23,7 @@ const Navbar = () => {
 
                 <div className="hidden lg:flex items-center gap-8 text-sm font-medium">
 
-                    <Link to="/home"
+                    <Link to="/"
                         className="hover:text-orange-400 cursor-pointer transition-all"
                     >
                         Home
